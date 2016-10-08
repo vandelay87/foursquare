@@ -1,5 +1,3 @@
-# foursquare
-
 # Synopsis
 A simple single page application that uses the Foursquare API to allow the user to search for popular/recommended venues by area.
 
