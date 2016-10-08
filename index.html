@@ -7,48 +7,69 @@
 		
 		<!-- Bootstrap -->
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+		<!-- Font Awesome -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
 		
 		<style>
 			body{
-				padding-top:40px;
+				padding-top:10px;
+			}
+			[ng\:cloak], [ng-cloak], .ng-cloak {
+				display:none!important;
+			}
+			.loading-container{
+				height:80px;
 			}
 		</style>
 	</head>
 	<body>
 		<div class="container" ng-app="foursquareApp" ng-controller="venueSearchCtrl">
-			<form name="venueSearchForm" ng-submit="venueSearch()" class="input-group input-group-lg">
+		
+			<div class="row">
+				<div class="col-md-2 col-md-offset-5 loading-container">
+					<i class="fa fa-cog fa-spin fa-5x" ng-show="loading" ng-cloak></i>
+				</div>
+			</div>
+			
+			<form name="venueSearchForm" ng-submit="venueSearch()" class="input-group input-group-lg form-group">
 				<input name="searchInput" type="text" class="form-control" ng-model="search" ng-required="true" placeholder="Search for popular venues by area" />
 				<span class="input-group-btn">
 					<button type="submit" class="btn btn-default" ng-disabled="venueSearchForm.searchInput.$pristine"><span class="glyphicon glyphicon-search"></span></button>
 				</span>
 			</form>
 			
-			<span>{{error}}</span>
+			<div class="alert alert-danger" ng-show="error" ng-cloak>
+				<strong>Error!</strong> {{error}}
+			</div>
 		
-			<div class="table-responsive" ng-show="venues">
+			<div class="table-responsive" ng-show="venues" ng-cloak>
 				<table class="table table-striped">
-					<tr>
-						<th><a href="#" ng-click="orderField('name')">
-							Name
-							<span ng-show="field=='name' && toggle" class="glyphicon glyphicon-chevron-up"></span>
-							<span ng-show="field=='name' && !toggle" class="glyphicon glyphicon-chevron-down"></span>
-						</a></th>
-						<th><a href="#" ng-click="orderField('location.formattedAddress')">
-							Address
-							<span ng-show="field=='location.formattedAddress' && toggle" class="glyphicon glyphicon-chevron-up"></span>
-							<span ng-show="field=='location.formattedAddress' && !toggle" class="glyphicon glyphicon-chevron-down"></span>
-						</a></th>
-						<th><a href="#" ng-click="orderField('categories[0].name')">
-							Category
-							<span ng-show="field=='categories[0].name' && toggle" class="glyphicon glyphicon-chevron-up"></span>
-							<span ng-show="field=='categories[0].name' && !toggle" class="glyphicon glyphicon-chevron-down"></span>
-						</a></th>
-					</tr>
-					<tr ng-repeat="v in venues | orderBy:field:toggle">
-						<td>{{v.name}}</td>
-						<td>{{v.location.address}}, {{v.location.postalCode}}, {{v.location.city}}, {{v.location.country}}</td>
-						<td>{{v.categories[0].name}}</td>
-					</tr>
+					<thead>
+						<tr>
+							<th><button type="button" class="btn btn-primary" ng-click="orderField('name')">
+								Name
+								<span ng-show="field=='name' && toggle" class="glyphicon glyphicon-chevron-up"></span>
+								<span ng-show="field=='name' && !toggle" class="glyphicon glyphicon-chevron-down"></span>
+							</button></th>
+							<th><button type="button" class="btn btn-primary" ng-click="orderField('location.formattedAddress')">
+								Address
+								<span ng-show="field=='location.formattedAddress' && toggle" class="glyphicon glyphicon-chevron-up"></span>
+								<span ng-show="field=='location.formattedAddress' && !toggle" class="glyphicon glyphicon-chevron-down"></span>
+							</button></th>
+							<th><button type="button" class="btn btn-primary" ng-click="orderField('categories[0].name')">
+								Category
+								<span ng-show="field=='categories[0].name' && toggle" class="glyphicon glyphicon-chevron-up"></span>
+								<span ng-show="field=='categories[0].name' && !toggle" class="glyphicon glyphicon-chevron-down"></span>
+							</button></th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr ng-repeat="v in venues | orderBy:field:toggle">
+							<td>{{v.name}}</td>
+							<td>{{v.location.formattedAddress | cleanAddress}}</td>
+							<td>{{v.categories[0].name}}</td>
+						</tr>
+					</tbody>
 				</table>
 			</div>
 		</div>
@@ -64,25 +85,55 @@
 			var app = angular.module('foursquareApp', []);			
 			app.controller('venueSearchCtrl', function($scope, $http){			
 				$scope.venueSearch = function(){
+					// request made, show loading icon
+					$scope.loading = true;
+					
+					// call api and get json data
 					$http.get("https://api.foursquare.com/v2/venues/explore/?client_id=QZQDGQJ50Z3A1VMF43ILW1PE3WJPUPJPHJAEAICTFQVNCRSP&client_secret=5OKHLFBYTQSMZILDBANRMDR2ZSPRSQJ5TG2NX5EBDYYWXEEB&v=20161008&near=" + $scope.search)
 					.success(function(data){
+						// initialise array and clear error
 						$scope.venues = [];
 						$scope.error = null;
 						
+						// order by field function
 						$scope.orderField = function(field){
 							$scope.field = field;
 							$scope.toggle = !$scope.toggle;
 						}
 						
+						// loop through data and push into array
 						angular.forEach(data.response.groups[0].items, function(item){
 							$scope.venues.push(item.venue);
 						});
 					})
 					.error(function(data){
+						// clear venues array and assign error message
 						$scope.venues = null;
-						$scope.error = data;
+						$scope.error = data.meta.errorDetail;
+					})
+					.finally(function(){
+						// finished, hide loading icon
+						$scope.loading = false;
 					});
 				}
+			});
+			app.filter('cleanAddress', function(){
+				return function (data){
+					var str = "";
+					var length = data.length;
+					
+					// loop through address array and format to string
+					angular.forEach(data, function(item, index){
+						if(length == index + 1){
+							str = str + item;
+						}
+						else{
+							str = str + item + ", ";
+						}
+					});
+					
+					return str;
+				};
 			});
 		</script>
 	</body>
