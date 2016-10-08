@@ -10,11 +10,26 @@
 	</head>
 	<body>
 		<div class="container" ng-app="foursquareApp" ng-controller="venueSearchCtrl">
-			<ul>
-				<li ng-repeat="v in venues">
-					{{v.venue.name}}
-				</li>
-			</ul>
+			<div class="input-group input-group-lg">
+				<input type="text" class="form-control" ng-model="search" placeholder="Search for popular venues by area" /><span class="input-group-addon glyphicon glyphicon-search"></span>
+			</div>
+			
+			<span>{{error}}</span>
+		
+			<div class="table-responsive">
+				<table class="table table-striped">
+					<tr>
+						<th>Name</th>
+						<th>Address</th>
+						<th>Category</th>
+					</tr>
+					<tr ng-repeat="v in venues">
+						<td>{{v.venue.name}}</td>
+						<td>{{v.venue.location.address}}, {{v.venue.location.postalCode}}, {{v.venue.location.city}}, {{v.venue.location.country}}</td>
+						<td>{{v.venue.categories[0].name}}</td>
+					</tr>
+				</table>
+			</div>
 		</div>
 		
 		<!-- jQuery -->
@@ -27,15 +42,22 @@
 		<script>
 			var app = angular.module('foursquareApp', []);
 			app.controller('venueSearchCtrl', function($scope, $http){
-				$http.get("https://api.foursquare.com/v2/venues/explore/?client_id=QZQDGQJ50Z3A1VMF43ILW1PE3WJPUPJPHJAEAICTFQVNCRSP&&client_secret=5OKHLFBYTQSMZILDBANRMDR2ZSPRSQJ5TG2NX5EBDYYWXEEB&v=20161008&near=london")
-				.success(function(data){
-					$scope.venues = [];
-					angular.forEach(data.response.groups[0].items, function(item){
-						$scope.venues.push(item);
-					});
-				})
-				.error(function(data){
+				$scope.$watch("search", function(){
+					fetch();
 				});
+				
+				function fetch(){
+					$http.get("https://api.foursquare.com/v2/venues/explore/?client_id=QZQDGQJ50Z3A1VMF43ILW1PE3WJPUPJPHJAEAICTFQVNCRSP&&client_secret=5OKHLFBYTQSMZILDBANRMDR2ZSPRSQJ5TG2NX5EBDYYWXEEB&v=20161008&near=" + $scope.search)
+					.success(function(data){
+						$scope.venues = [];
+						angular.forEach(data.response.groups[0].items, function(item){
+							$scope.venues.push(item);
+						});
+					})
+					.error(function(data){
+						$scope.error = data;
+					});
+				}
 			});
 		</script>
 	</body>
