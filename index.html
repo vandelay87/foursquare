@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Foursquare</title>
+		
+		<!-- Bootstrap -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	</head>
+	<body>
+		<div class="container" ng-app="foursquareApp" ng-controller="venueSearchCtrl">
+			<ul>
+				<li ng-repeat="v in venues">
+					{{v.venue.name}}
+				</li>
+			</ul>
+		</div>
+		
+		<!-- jQuery -->
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+		<!-- Latest JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+		<!-- AngularJS -->
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.8/angular.min.js"></script>
+		
+		<script>
+			var app = angular.module('foursquareApp', []);
+			app.controller('venueSearchCtrl', function($scope, $http){
+				$http.get("https://api.foursquare.com/v2/venues/explore/?client_id=QZQDGQJ50Z3A1VMF43ILW1PE3WJPUPJPHJAEAICTFQVNCRSP&&client_secret=5OKHLFBYTQSMZILDBANRMDR2ZSPRSQJ5TG2NX5EBDYYWXEEB&v=20161008&near=london")
+				.success(function(data){
+					$scope.venues = [];
+					angular.forEach(data.response.groups[0].items, function(item){
+						$scope.venues.push(item);
+					});
+				})
+				.error(function(data){
+				});
+			});
+		</script>
+	</body>
+</html>
