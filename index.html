@@ -88,8 +88,11 @@
 					// request made, show loading icon
 					$scope.loading = true;
 					
+					// get current date
+					var currentDate = new Date().toJSON().slice(0,10).replace(/-/g,"");
+					
 					// call api and get json data
-					$http.get("https://api.foursquare.com/v2/venues/explore/?client_id=QZQDGQJ50Z3A1VMF43ILW1PE3WJPUPJPHJAEAICTFQVNCRSP&client_secret=5OKHLFBYTQSMZILDBANRMDR2ZSPRSQJ5TG2NX5EBDYYWXEEB&v=20161008&near=" + $scope.search)
+					$http.get("https://api.foursquare.com/v2/venues/explore/?client_id=QZQDGQJ50Z3A1VMF43ILW1PE3WJPUPJPHJAEAICTFQVNCRSP&client_secret=5OKHLFBYTQSMZILDBANRMDR2ZSPRSQJ5TG2NX5EBDYYWXEEB&v=" + currentDate + "&near=" + $scope.search)
 					.success(function(data){
 						// initialise array and clear error
 						$scope.venues = [];
@@ -107,9 +110,16 @@
 						});
 					})
 					.error(function(data){
-						// clear venues array and assign error message
+						// clear venues array
 						$scope.venues = null;
-						$scope.error = data.meta.errorDetail;
+						
+						// custom error message
+						if(data.meta.errorType == "failed_geocode"){
+							$scope.error = "Could not find place '" + $scope.search + "'.";
+						}
+						else{
+							$scope.error = data.meta.errorDetail;
+						}
 					})
 					.finally(function(){
 						// finished, hide loading icon
